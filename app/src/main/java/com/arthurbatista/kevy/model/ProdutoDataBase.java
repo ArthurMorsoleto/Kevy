@@ -23,7 +23,7 @@ public abstract class ProdutoDataBase extends RoomDatabase {
                     ProdutoDataBase.class,
                     "produto_database")
                     .fallbackToDestructiveMigration()
-                    .addCallback(roomCallback)
+//                    .addCallback(roomCallback)
                     .build();
         }
         return instance;
@@ -33,7 +33,7 @@ public abstract class ProdutoDataBase extends RoomDatabase {
         @Override
         public void onCreate(@NonNull SupportSQLiteDatabase db) {
             super.onCreate(db);
-            new PopulateDbAsyncTask(instance).execute();
+            //new PopulateDbAsyncTask(instance).execute();
         }
     };
 
@@ -44,14 +44,29 @@ public abstract class ProdutoDataBase extends RoomDatabase {
             produtoDAO = db.produtoDAO();
         }
 
-
         @Override
         protected Void doInBackground(Void... voids) {
+
             produtoDAO.insert(new Produto(
                     "Produto 1",
                     5,
                     70.00,
                     "Produto muito legal",
+                    null
+
+            ));
+            produtoDAO.insert(new Produto(
+                    "Produto 2",
+                    3,
+                    20.00,
+                    "Produto muito barato",
+                    null
+            ));
+            produtoDAO.insert(new Produto(
+                    "Produto 3",
+                    10,
+                    70.00,
+                    "Produto muito feio",
                     null
             ));
             return null;
