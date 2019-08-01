@@ -1,12 +1,16 @@
 package com.arthurbatista.kevy.view;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,16 +21,34 @@ import android.widget.Toast;
 
 import com.arthurbatista.kevy.R;
 import com.arthurbatista.kevy.model.Produto;
+import com.arthurbatista.kevy.viewmodel.ProdutoViewModel;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 public class AddProdutoActivity extends AppCompatActivity {
+
+    private ProdutoViewModel produtoViewModel;
 
     private EditText edtNome;
     private EditText edtPreco;
     private NumberPicker nbmQuantidade;
-    private ImageView imgProduto;
+    private ImageView imgViewProduto;
     private EditText edtDescricao;
+
+    final int REQUEST_CODE_GALLERY = 999;
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int CAMERA_REQUEST = 1888;
+    private static final int MY_CAMERA_PERMISSION_CODE = 100;
+
+    public static final String EXTRA_ID = "com.arthurbatista.kevy.EXTRA_ID";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,12 +58,55 @@ public class AddProdutoActivity extends AppCompatActivity {
         edtNome = findViewById(R.id.edtNomeProduto);
         edtPreco = findViewById(R.id.edtPrecoProduto);
         nbmQuantidade = findViewById(R.id.nbmQuantidade);
-        imgProduto = findViewById(R.id.imgProduto);
+        imgViewProduto = findViewById(R.id.imgViewProduto);
         edtDescricao = findViewById(R.id.edtDescricaoProduto);
+
+        produtoViewModel = new ProdutoViewModel(getApplication());
+
+        nbmQuantidade.setMinValue(1);
+        nbmQuantidade.setMaxValue(100);
+        nbmQuantidade.setValue(1);
 
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back);
         setTitle("Adicionar Produto");
 
+        Intent intent = getIntent();
+        if (intent.hasExtra(EXTRA_ID)){
+            setTitle("Atualizar produto");
+            Produto produto = (Produto) getIntent().getSerializableExtra("EXTRA_ID");
+            Log.i("PRODUTO", "onCreate: " + produto);
+        }
+
+        imgViewProduto.setOnClickListener(v -> {
+            try {
+                //Caixa de diálog - Escolha Camera ou Galeria
+                AlertDialog.Builder dialog = new AlertDialog.Builder(AddProdutoActivity.this);
+                dialog.setTitle("Por Favor");
+                dialog.setMessage("Escolha uma opção para prosseguir:");
+                dialog.setPositiveButton("Camera", (dialog1, which) -> {
+                    ActivityCompat.requestPermissions(
+                            AddProdutoActivity.this,
+                            new String[]{Manifest.permission.CAMERA},
+                            MY_CAMERA_PERMISSION_CODE
+                    );
+                    Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                });
+                dialog.setNegativeButton("Galeria", (qdialog, which) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        ActivityCompat.requestPermissions(
+                                AddProdutoActivity.this,
+                                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                REQUEST_CODE_GALLERY
+                        );
+                    }
+                });
+                dialog.create();
+                dialog.show();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override
@@ -55,7 +120,9 @@ public class AddProdutoActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.save_produto:
+                
                 salvarProduto();
+                
                 return true;
             case R.id.delete_produto:
                 //TODO: metodo para deletar o produto
@@ -68,39 +135,130 @@ public class AddProdutoActivity extends AppCompatActivity {
 
     }
 
+
+
     private void salvarProduto() {
+        double precoProduto = 0;
         String nomeProduto = edtNome.getText().toString();
-        double precoProduto = Double.valueOf(edtPreco.getText().toString());
         int quantidadeProduto = nbmQuantidade.getValue();
         String descProduto = edtDescricao.getText().toString();
-        if(nomeProduto.trim().isEmpty()){
+        byte[] photoProduto = imageViewToByte(imgViewProduto);
+
+        if (!edtPreco.getText().toString().isEmpty()) {
+            precoProduto = Double.valueOf(edtPreco.getText().toString());
+        }
+        if (nomeProduto.trim().isEmpty()) {
+            edtNome.requestFocus();
             Toast.makeText(this, "Insira o nome do produto", Toast.LENGTH_SHORT).show();
             return;
         }
-        //TODO: finalizar validação dos campos antes de salvar no sqlite
-        //TODO: método para buscar a imagem: galeria??camera??
+        else if (precoProduto < 0) {
+            edtPreco.requestFocus();
+            Toast.makeText(this, "Insira o preço do produto", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        else if (photoProduto.length < 0) {
+            imgViewProduto.requestFocus();
+            Toast.makeText(this, "É necessário inserir uma imagem", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Produto produto = (new Produto(
                 nomeProduto,
                 quantidadeProduto,
                 precoProduto,
                 descProduto,
-                imageViewToByte(imgProduto) //TODO: img não pode ser nula
+                photoProduto
         ));
 
-        Intent intentData = new Intent();
+        produtoViewModel.insert(produto);
+        finish();
+
+        //TODO: usar o activityResult da Main
+/*        Intent intentData = new Intent();
         intentData.putExtra("PRODUTO", (Parcelable) produto);
         setResult(RESULT_OK, intentData);
-        finish();
+        finish();*/
     }
 
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_CODE_GALLERY) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setType("image/*");
+                startActivityForResult(intent, REQUEST_CODE_GALLERY);
+            }
+            return;
+        }
+        if (requestCode == MY_CAMERA_PERMISSION_CODE)
+        {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+                Toast.makeText(this, "camera permission granted", Toast.LENGTH_LONG).show();
+                Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(cameraIntent, CAMERA_REQUEST);
+            }
+            else
+            {
+                Toast.makeText(this, "camera permission denied", Toast.LENGTH_LONG).show();
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE_GALLERY && resultCode == RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            try {
+                assert uri != null;
+                InputStream inputStream = getContentResolver().openInputStream(uri);
+                Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                imgViewProduto.setImageBitmap(bitmap);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK)
+        {
+            Bitmap photo = (Bitmap) data.getExtras().get("data");
+            imgViewProduto.setImageBitmap(photo);
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+
+    /* METODOS DE SUPORTE */
 
     //metodo para transformar imagem em byteArray
     public static byte[] imageViewToByte(ImageView image) {
-        Bitmap bitmap = ((BitmapDrawable)image.getDrawable()).getBitmap();
+        Bitmap bitmap = ((BitmapDrawable) image.getDrawable()).getBitmap();
+        bitmap = getResizedBitmap(bitmap, 480, 640);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        byte[] byteArray = stream.toByteArray();
-        return byteArray;
+        return stream.toByteArray();
     }
+
+    //método para alterar o tamanho do bitmap
+    public static Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // "RECREATE" THE NEW BITMAP
+        return Bitmap.createBitmap(
+                bm, 0, 0, width, height, matrix, false);
+    }
+
+    
 }

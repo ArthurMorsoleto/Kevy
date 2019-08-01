@@ -1,5 +1,6 @@
 package com.arthurbatista.kevy.model;
 
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -17,9 +18,16 @@ public class Produto {
 
     private String descricaoProduto;
 
+    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     private byte[] imagemProduto;
 
-    public Produto(String nomeProduto, int quantidadeProduto, double precoProduto, String descricaoProduto, byte[] imagemProduto) {
+    public Produto(
+            String nomeProduto,
+            int quantidadeProduto,
+            double precoProduto,
+            String descricaoProduto,
+            byte[] imagemProduto
+    ) {
         this.nomeProduto = nomeProduto;
         this.quantidadeProduto = quantidadeProduto;
         this.precoProduto = precoProduto;

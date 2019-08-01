@@ -9,9 +9,8 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = { Produto.class }, version = 1)
-public abstract class ProdutoDataBase extends RoomDatabase {
-
+@Database(entities = { Produto.class }, version = 1 )
+public abstract class ProdutoDataBase extends RoomDatabase  {
 
     private static ProdutoDataBase instance;
 
@@ -23,7 +22,7 @@ public abstract class ProdutoDataBase extends RoomDatabase {
                     ProdutoDataBase.class,
                     "produto_database")
                     .fallbackToDestructiveMigration()
-//                    .addCallback(roomCallback)
+                    .addCallback(roomCallback)
                     .build();
         }
         return instance;
@@ -33,7 +32,6 @@ public abstract class ProdutoDataBase extends RoomDatabase {
         @Override
         public void onCreate(@NonNull SupportSQLiteDatabase db) {
             super.onCreate(db);
-            //new PopulateDbAsyncTask(instance).execute();
         }
     };
 

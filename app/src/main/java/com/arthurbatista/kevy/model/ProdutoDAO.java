@@ -21,7 +21,7 @@ public interface ProdutoDAO {
     @Delete
     void delete(Produto produto);
 
-    @Query("SELECT * FROM produto_table ORDER BY quantidadeProduto DESC")
+    @Query("SELECT * FROM produto_table")
     LiveData<List<Produto>> getAllProdutos();
 
 }

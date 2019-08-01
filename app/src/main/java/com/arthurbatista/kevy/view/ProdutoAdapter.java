@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 public class ProdutoAdapter extends RecyclerView.Adapter<ProdutoAdapter.ProdutoHolder> {
 
     private List<Produto> produtos = new ArrayList<>();
+    private OnItemClickListener listener;
 
     @NonNull
     @Override
@@ -37,7 +38,7 @@ public class ProdutoAdapter extends RecyclerView.Adapter<ProdutoAdapter.ProdutoH
 
         byte[] produtoImage = produtoAtual.getImagemProduto();
         Bitmap bitmap = BitmapFactory.decodeByteArray(produtoImage, 0, produtoImage.length);
-        //holder.imageViewImagemProduto.setImageBitmap(bitmap);
+        holder.imageViewImagemProduto.setImageBitmap(bitmap);
 
         holder.textViewNome.setText(produtoAtual.getNomeProduto());
         holder.textViewPreco.setText(String.valueOf(produtoAtual.getPrecoProduto()));
@@ -67,6 +68,14 @@ public class ProdutoAdapter extends RecyclerView.Adapter<ProdutoAdapter.ProdutoH
             textViewPreco = itemView.findViewById(R.id.txtPrecoProduto);
             textViewQuantidade = itemView.findViewById(R.id.txtQuantidadeProduto);
         }
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(Produto produto);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener){
+        this.listener = listener;
     }
 
 

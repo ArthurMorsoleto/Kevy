@@ -3,12 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/back_produtos"
-        android:icon="@drawable/ic_arrow_back"
-        android:title="Voltar"
-        app:showAsAction="always"/>
-
-    <item
         android:id="@+id/save_produto"
         android:icon="@drawable/ic_save"
         android:title="Save"

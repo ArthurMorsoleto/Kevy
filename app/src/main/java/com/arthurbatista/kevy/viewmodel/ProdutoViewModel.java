@@ -1,9 +1,9 @@
 package com.arthurbatista.kevy.viewmodel;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.arthurbatista.kevy.model.Produto;
-import com.arthurbatista.kevy.model.ProdutoRepository;
 
 import java.util.List;
 
@@ -11,30 +11,33 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
+import static android.content.ContentValues.TAG;
+
 public class ProdutoViewModel extends AndroidViewModel {
 
     private ProdutoRepository repository;
     private LiveData<List<Produto>> allProdutos;
+    private LiveData<List<Produto>> listProdutos;
 
     public ProdutoViewModel(@NonNull Application application) {
         super(application);
-        repository =  new ProdutoRepository(application);
+        repository = new ProdutoRepository(application);
         allProdutos = repository.getAllProdutos();
     }
 
-    public void insert(Produto produto){
+    public void insert(Produto produto) {
         repository.insert(produto);
     }
 
-    public void delete(Produto produto){
+    public void delete(Produto produto) {
         repository.delete(produto);
     }
 
-    public void update(Produto produto){
+    public void update(Produto produto) {
         repository.update(produto);
     }
 
-    public LiveData<List<Produto>> getAllProdutos(){
+    public LiveData<List<Produto>> getAllProdutos() {
         return allProdutos;
     }
 }
