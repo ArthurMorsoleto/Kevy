@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 public class ProdutoAdapter extends RecyclerView.Adapter<ProdutoAdapter.ProdutoHolder> {
 
     private List<Produto> produtos = new ArrayList<>();
+
     private OnItemClickListener listener;
 
     @NonNull
@@ -50,23 +51,35 @@ public class ProdutoAdapter extends RecyclerView.Adapter<ProdutoAdapter.ProdutoH
         return produtos.size();
     }
 
-    public void setProdutos(List<Produto> produtos){
+    public void setProdutos(List<Produto> produtos) {
         this.produtos = produtos;
         notifyDataSetChanged();
     }
 
-    class ProdutoHolder extends RecyclerView.ViewHolder{
+    public Produto getProdutoAt(int position) {
+        return produtos.get(position);
+    }
+
+    class ProdutoHolder extends RecyclerView.ViewHolder {
         private ImageView imageViewImagemProduto;
         private TextView textViewNome;
         private TextView textViewPreco;
         private TextView textViewQuantidade;
 
-        public ProdutoHolder(@NonNull View itemView) {
+        ProdutoHolder(@NonNull View itemView) {
             super(itemView);
             imageViewImagemProduto = itemView.findViewById(R.id.imgProduto);
             textViewNome = itemView.findViewById(R.id.txtNomeProduto);
             textViewPreco = itemView.findViewById(R.id.txtPrecoProduto);
             textViewQuantidade = itemView.findViewById(R.id.txtQuantidadeProduto);
+
+            itemView.setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (listener != null && position != RecyclerView.NO_POSITION) {
+                    listener.onItemClick(produtos.get(position));
+                }
+            });
+
         }
     }
 
@@ -74,7 +87,7 @@ public class ProdutoAdapter extends RecyclerView.Adapter<ProdutoAdapter.ProdutoH
         void onItemClick(Produto produto);
     }
 
-    public void setOnItemClickListener(OnItemClickListener listener){
+    public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
 

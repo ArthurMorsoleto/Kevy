@@ -45,7 +45,7 @@ public abstract class ProdutoDataBase extends RoomDatabase  {
         @Override
         protected Void doInBackground(Void... voids) {
 
-            produtoDAO.insert(new Produto(
+            /*produtoDAO.insert(new Produto(
                     "Produto 1",
                     5,
                     70.00,
@@ -66,7 +66,7 @@ public abstract class ProdutoDataBase extends RoomDatabase  {
                     70.00,
                     "Produto muito feio",
                     null
-            ));
+            ));*/
             return null;
         }
     }

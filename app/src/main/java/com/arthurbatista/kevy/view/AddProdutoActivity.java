@@ -10,7 +10,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -28,7 +27,6 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -43,12 +41,15 @@ public class AddProdutoActivity extends AppCompatActivity {
     private ImageView imgViewProduto;
     private EditText edtDescricao;
 
+    private Boolean isUpdateOrDelete = false;
+    private int produtoToUpdateOrDelete = 0;
+
+
     final int REQUEST_CODE_GALLERY = 999;
-    static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int CAMERA_REQUEST = 1888;
     private static final int MY_CAMERA_PERMISSION_CODE = 100;
 
-    public static final String EXTRA_ID = "com.arthurbatista.kevy.EXTRA_ID";
+    public static final String EXTRA_PRODUTO = "com.arthurbatista.kevy.EXTRA_PRODUTO";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,10 +72,27 @@ public class AddProdutoActivity extends AppCompatActivity {
         setTitle("Adicionar Produto");
 
         Intent intent = getIntent();
-        if (intent.hasExtra(EXTRA_ID)){
+        if (intent.hasExtra(EXTRA_PRODUTO)) {
             setTitle("Atualizar produto");
-            Produto produto = (Produto) getIntent().getSerializableExtra("EXTRA_ID");
-            Log.i("PRODUTO", "onCreate: " + produto);
+            Produto produtoAtual = (Produto) intent.getSerializableExtra(EXTRA_PRODUTO);
+
+            edtNome.setText(produtoAtual.getNomeProduto());
+
+            edtPreco.setText(produtoAtual.getPrecoProduto());
+
+            nbmQuantidade.setValue(produtoAtual.getQuantidadeProduto());
+
+            edtDescricao.setText(produtoAtual.getDescricaoProduto());
+
+            byte[] imgProduto = produtoAtual.getImagemProduto();
+
+            imgViewProduto.setImageBitmap(
+                    BitmapFactory.decodeByteArray(imgProduto, 0, imgProduto.length)
+            );
+
+            isUpdateOrDelete = true;
+
+            produtoToUpdateOrDelete = produtoAtual.getId();
         }
 
         imgViewProduto.setOnClickListener(v -> {
@@ -120,39 +138,57 @@ public class AddProdutoActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.save_produto:
-                
                 salvarProduto();
-                
                 return true;
             case R.id.delete_produto:
-                //TODO: metodo para deletar o produto
-
+                deletarProduto();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
 
         }
-
     }
 
+    private void deletarProduto() {
+        if (isUpdateOrDelete) {
+            Produto produto = (new Produto(
+                    "",
+                    0,
+                    "",
+                    "",
+                    imageViewToByte(imgViewProduto)
+            ));
+            produto.setId(produtoToUpdateOrDelete);
 
+            AlertDialog.Builder dialog = new AlertDialog.Builder(AddProdutoActivity.this);
+            dialog.setTitle("Atenção");
+            dialog.setMessage("Deseja excluir esse produto?");
+            dialog.setPositiveButton("Sim", (dialog1, which) -> {
+                produtoViewModel.delete(produto);
+                Toast.makeText(AddProdutoActivity.this, "Produto deletado com sucesso", Toast.LENGTH_SHORT).show();
+                finish();
+            });
+            dialog.setNegativeButton("Não", (dialog12, which) -> {
+
+            });
+            dialog.create();
+            dialog.show();
+        }
+    }
 
     private void salvarProduto() {
-        double precoProduto = 0;
+        String precoProduto = edtPreco.getText().toString();
         String nomeProduto = edtNome.getText().toString();
-        int quantidadeProduto = nbmQuantidade.getValue();
         String descProduto = edtDescricao.getText().toString();
+        int quantidadeProduto = nbmQuantidade.getValue();
         byte[] photoProduto = imageViewToByte(imgViewProduto);
 
-        if (!edtPreco.getText().toString().isEmpty()) {
-            precoProduto = Double.valueOf(edtPreco.getText().toString());
-        }
         if (nomeProduto.trim().isEmpty()) {
             edtNome.requestFocus();
             Toast.makeText(this, "Insira o nome do produto", Toast.LENGTH_SHORT).show();
             return;
         }
-        else if (precoProduto < 0) {
+        else if (precoProduto.isEmpty()) {
             edtPreco.requestFocus();
             Toast.makeText(this, "Insira o preço do produto", Toast.LENGTH_SHORT).show();
             return;
@@ -171,18 +207,18 @@ public class AddProdutoActivity extends AppCompatActivity {
                 photoProduto
         ));
 
-        produtoViewModel.insert(produto);
+        if (isUpdateOrDelete) {
+            produto.setId(produtoToUpdateOrDelete);
+            produtoViewModel.update(produto);
+            Toast.makeText(this, "Produto Atualizado com Sucesso", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            produtoViewModel.insert(produto);
+            Toast.makeText(this, "Produto Salvo com Sucesso", Toast.LENGTH_SHORT).show();
+        }
+
         finish();
-
-        //TODO: usar o activityResult da Main
-/*        Intent intentData = new Intent();
-        intentData.putExtra("PRODUTO", (Parcelable) produto);
-        setResult(RESULT_OK, intentData);
-        finish();*/
     }
-
-
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -194,16 +230,13 @@ public class AddProdutoActivity extends AppCompatActivity {
             }
             return;
         }
-        if (requestCode == MY_CAMERA_PERMISSION_CODE)
-        {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-            {
+        if (requestCode == MY_CAMERA_PERMISSION_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "camera permission granted", Toast.LENGTH_LONG).show();
                 Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
                 startActivityForResult(cameraIntent, CAMERA_REQUEST);
             }
-            else
-            {
+            else {
                 Toast.makeText(this, "camera permission denied", Toast.LENGTH_LONG).show();
             }
         }
@@ -223,8 +256,7 @@ public class AddProdutoActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-        if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK)
-        {
+        if (requestCode == CAMERA_REQUEST && resultCode == RESULT_OK) {
             Bitmap photo = (Bitmap) data.getExtras().get("data");
             imgViewProduto.setImageBitmap(photo);
         }
@@ -260,5 +292,5 @@ public class AddProdutoActivity extends AppCompatActivity {
                 bm, 0, 0, width, height, matrix, false);
     }
 
-    
+
 }

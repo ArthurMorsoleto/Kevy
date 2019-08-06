@@ -1,11 +1,13 @@
 package com.arthurbatista.kevy.model;
 
+import java.io.Serializable;
+
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "produto_table") //annotation do Room
-public class Produto {
+public class Produto implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     private int id;
@@ -14,7 +16,7 @@ public class Produto {
 
     private int quantidadeProduto;
 
-    private double precoProduto;
+    private String precoProduto;
 
     private String descricaoProduto;
 
@@ -24,7 +26,7 @@ public class Produto {
     public Produto(
             String nomeProduto,
             int quantidadeProduto,
-            double precoProduto,
+            String precoProduto,
             String descricaoProduto,
             byte[] imagemProduto
     ) {
@@ -51,7 +53,7 @@ public class Produto {
         return quantidadeProduto;
     }
 
-    public double getPrecoProduto() {
+    public String getPrecoProduto() {
         return precoProduto;
     }
 

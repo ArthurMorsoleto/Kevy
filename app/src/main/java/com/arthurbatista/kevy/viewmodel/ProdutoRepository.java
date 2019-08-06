@@ -14,35 +14,33 @@ import androidx.lifecycle.LiveData;
 
 import static android.content.ContentValues.TAG;
 
-public class ProdutoRepository {
+class ProdutoRepository {
 
     private ProdutoDAO produtoDAO;
     private LiveData<List<Produto>> allProdutos;
 
-    public ProdutoRepository(Application application) {
+    ProdutoRepository(Application application) {
         ProdutoDataBase dataBase = ProdutoDataBase.getInstance(application);
         produtoDAO = dataBase.produtoDAO();
 
-        LiveData<List<Produto>> listProdutos = produtoDAO.getAllProdutos();;
+        LiveData<List<Produto>> listProdutos = produtoDAO.getAllProdutos();
         Log.i(TAG, "ProdutoRepository: " + listProdutos);
-
-
         allProdutos = produtoDAO.getAllProdutos();
     }
 
-    public void insert(Produto produto) {
+    void insert(Produto produto) {
         new InsertProdutoAsyncTask(produtoDAO).execute(produto);
     }
 
-    public void update(Produto produto) {
+    void update(Produto produto) {
         new UpdateProdutoAsyncTask(produtoDAO).execute(produto);
     }
 
-    public void delete(Produto produto) {
+    void delete(Produto produto) {
         new DeleteProdutoAsyncTask(produtoDAO).execute(produto);
     }
 
-    public LiveData<List<Produto>> getAllProdutos() {
+    LiveData<List<Produto>> getAllProdutos() {
         return allProdutos;
     }
 
